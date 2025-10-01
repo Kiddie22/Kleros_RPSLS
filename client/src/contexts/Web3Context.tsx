@@ -20,6 +20,7 @@ interface Web3ContextType {
   isConnected: boolean;
   provider: ethers.providers.Web3Provider | null;
   signer: ethers.providers.JsonRpcSigner | null;
+  isCorrectNetwork: boolean;
   connectWallet: () => Promise<void>;
   disconnect: () => void;
 }
@@ -30,14 +31,45 @@ interface Web3ProviderProps {
   children: React.ReactNode;
 }
 
+// Sepolia network configuration
+const SEPOLIA_CHAIN_ID = "0xaa36a7";
+
 export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
   const [walletAddress, setWalletAddress] = useState<string>("");
   const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [isCorrectNetwork, setIsCorrectNetwork] = useState<boolean>(false);
   const [provider, setProvider] =
     useState<ethers.providers.Web3Provider | null>(null);
   const [signer, setSigner] = useState<ethers.providers.JsonRpcSigner | null>(
     null
   );
+
+  if (typeof window.ethereum !== "undefined") {
+    window.ethereum.on("accountsChanged", async () => {
+      console.log("Accounts changed");
+    });
+    window.ethereum.on("chainChanged", async () => {
+      console.log("Chain changed");
+      window.location.reload();
+    });
+  }
+
+  const checkNetwork = async () => {
+    if (window.ethereum) {
+      try {
+        const chainId = await window.ethereum.request({
+          method: "eth_chainId",
+        });
+        const isSepolia = chainId === SEPOLIA_CHAIN_ID;
+        setIsCorrectNetwork(isSepolia);
+        return isSepolia;
+      } catch (error) {
+        console.error("Failed to check network:", error);
+        return false;
+      }
+    }
+    return false;
+  };
 
   const connectWallet = async () => {
     if (window.ethereum) {
@@ -49,6 +81,15 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
 
         const address = accounts?.[0];
         if (!address) return;
+
+        // Check if on correct network
+        const isCorrectNetwork = await checkNetwork();
+        if (!isCorrectNetwork) {
+          console.log("Not on Sepolia testnet");
+          alert("Please switch to Sepolia testnet to use this dApp");
+          return;
+        }
+
         setWalletAddress(address);
         setIsConnected(true);
 
@@ -71,11 +112,12 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
   const disconnect = () => {
     setWalletAddress("");
     setIsConnected(false);
+    setIsCorrectNetwork(false);
     setProvider(null);
     setSigner(null);
   };
 
-  // Listen for account changes
+  // Listen for account and network changes
   useEffect(() => {
     if (window.ethereum) {
       const handleAccountsChanged = (accounts: string[]) => {
@@ -86,13 +128,24 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
         }
       };
 
+      const handleChainChanged = () => {
+        // Reload the page when network changes
+        console.log("Network changed");
+        window.location.reload();
+      };
+
       window.ethereum.on("accountsChanged", handleAccountsChanged);
+      window.ethereum.on("chainChanged", handleChainChanged);
+
+      // Check network on mount
+      checkNetwork();
 
       return () => {
         window.ethereum?.removeListener(
           "accountsChanged",
           handleAccountsChanged
         );
+        window.ethereum?.removeListener("chainChanged", handleChainChanged);
       };
     }
   }, [walletAddress]);
@@ -102,6 +155,7 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
     isConnected,
     provider,
     signer,
+    isCorrectNetwork,
     connectWallet,
     disconnect,
   };
