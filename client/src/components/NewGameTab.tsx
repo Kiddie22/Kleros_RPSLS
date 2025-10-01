@@ -25,14 +25,14 @@ import { useRpsContractFactory } from "@/hooks/useRpsContractFactory";
 import { useWeb3 } from "@/contexts/Web3Context";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const NewGameTab = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
-  const [hash, setHash] = useState<string>("");
   const [contractAddress, setContractAddress] = useState<string>("");
 
-  const { signer } = useWeb3();
+  const { signer, walletAddress } = useWeb3();
   const { contractFactory } = useRpsContractFactory(signer);
 
   const moves = {
@@ -90,7 +90,6 @@ const NewGameTab = () => {
           [moveValue, saltBigNumber]
         )
       );
-      setHash(hash);
 
       console.log("Deploying contract...");
       const contract = await contractFactory?.deploy(hash, values.p2Address, {
@@ -101,6 +100,39 @@ const NewGameTab = () => {
       console.log("contract deployed");
       setContractAddress(contract?.address!);
       setIsLoading(false);
+
+      // Save game to DB
+      const response = await fetch(`http://localhost:3000/api/game/new-game`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contractAddress: contract?.address,
+          stake: values.stake,
+          player1: walletAddress,
+          player2: values.p2Address,
+        }),
+      });
+
+      const data = await response.json();
+      console.log({ data });
+
+      // Display toast notification
+      toast.success("New game created", {
+        description: `Contract deployed to address: ${contract?.address}. Send this to your opponent to join the game.`,
+        action: {
+          label: "View contract",
+          onClick: () => {
+            window.open(
+              `https://sepolia.etherscan.io/address/${contract?.address}`,
+              "_blank"
+            );
+          },
+        },
+        position: "top-center",
+        duration: 100000,
+      });
     } catch (error) {
       console.log({ error });
 
@@ -116,137 +148,140 @@ const NewGameTab = () => {
         return;
       }
 
-      setError((error as any).reason);
+      setError((error as Error).message);
       setIsLoading(false);
     }
   };
 
   return (
     <div>
-      <h1 className="text-2xl py-3">Start a new game</h1>
-
       {contractAddress ? (
-        <>
-          <p>Contract deployed to address: {contractAddress}</p>
-          <p>Send this to your opponent to join the game</p>
-          <p>Keep your hash safe, you will need it to play the game</p>
-          <p>Hash: {hash}</p>
-        </>
+        <div className="flex flex-col gap-2">
+          <span className="text-lg font-bold">New game created!</span>
+          <span className="text-sm">Contract address:</span>
+          <span className="text-gray-500 font-bold">{contractAddress}</span>
+          <span className="text-sm">
+            Send this to your opponent to join the game
+          </span>
+        </div>
       ) : (
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-8 w-full"
-          >
-            <FormField
-              control={form.control}
-              name="p1Move"
-              render={({ field }) => {
-                return (
+        <>
+          <h1 className="text-2xl py-3">Start a new game</h1>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-8 w-full"
+            >
+              <FormField
+                control={form.control}
+                name="p1Move"
+                render={({ field }) => {
+                  return (
+                    <FormItem>
+                      <FormLabel>Your move</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        disabled={isLoading}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem
+                            value={moves.Rock.toString()}
+                            key={moves.Rock}
+                          >
+                            Rock
+                          </SelectItem>
+                          <SelectItem
+                            value={moves.Paper.toString()}
+                            key={moves.Paper}
+                          >
+                            Paper
+                          </SelectItem>
+                          <SelectItem
+                            value={moves.Scissors.toString()}
+                            key={moves.Scissors}
+                          >
+                            Scissors
+                          </SelectItem>
+                          <SelectItem
+                            value={moves.Lizard.toString()}
+                            key={moves.Lizard}
+                          >
+                            Lizard
+                          </SelectItem>
+                          <SelectItem
+                            value={moves.Spock.toString()}
+                            key={moves.Spock}
+                          >
+                            Spock
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+
+              <FormField
+                control={form.control}
+                name="p2Address"
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Your move</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      disabled={isLoading}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem
-                          value={moves.Rock.toString()}
-                          key={moves.Rock}
-                        >
-                          Rock
-                        </SelectItem>
-                        <SelectItem
-                          value={moves.Paper.toString()}
-                          key={moves.Paper}
-                        >
-                          Paper
-                        </SelectItem>
-                        <SelectItem
-                          value={moves.Scissors.toString()}
-                          key={moves.Scissors}
-                        >
-                          Scissors
-                        </SelectItem>
-                        <SelectItem
-                          value={moves.Lizard.toString()}
-                          key={moves.Lizard}
-                        >
-                          Lizard
-                        </SelectItem>
-                        <SelectItem
-                          value={moves.Spock.toString()}
-                          key={moves.Spock}
-                        >
-                          Spock
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Address of opponent</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="0x..."
+                        {...field}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      This is who you are playing against.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
-                );
-              }}
-            />
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="p2Address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Address of opponent</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="0x..."
-                      {...field}
-                      disabled={isLoading}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    This is who you are playing against.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="stake"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Stake value</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="0"
-                      {...field}
-                      type="number"
-                      disabled={isLoading}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    This stake will be matched by your opponent.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Deploying..." : "Start game"}
-            </Button>
-            <p
-              data-slot="form-message"
-              className={cn("text-destructive text-sm")}
-            >
-              {error}
-            </p>
-          </form>
-        </Form>
+              <FormField
+                control={form.control}
+                name="stake"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Stake value</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="0"
+                        {...field}
+                        type="number"
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      This stake will be matched by your opponent.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "Deploying..." : "Start game"}
+              </Button>
+              <p
+                data-slot="form-message"
+                className={cn("text-destructive text-sm")}
+              >
+                {error}
+              </p>
+            </form>
+          </Form>
+        </>
       )}
     </div>
   );

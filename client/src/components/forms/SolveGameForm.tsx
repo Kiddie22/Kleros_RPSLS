@@ -19,16 +19,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useWeb3 } from "@/contexts/Web3Context";
 import { useRpsContractFactory } from "@/hooks/useRpsContractFactory";
 
-const SolveGameTab = () => {
+const SolveGameForm = ({ contractAddress }: { contractAddress: string }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
-  const [contractAddress, setContractAddress] = useState<string>("");
+  const [success, setSuccess] = useState<boolean>(false);
 
   const { provider, signer } = useWeb3();
   const { abi } = useRpsContractFactory(signer);
@@ -55,7 +55,7 @@ const SolveGameTab = () => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      contractAddress: "",
+      contractAddress: contractAddress,
       p1Move: "",
     },
   });
@@ -105,8 +105,14 @@ const SolveGameTab = () => {
         signer!
       );
 
+      // Fetch required contract info
+      const [j1, c2, stake] = await Promise.all([
+        contract.j1(),
+        contract.c2(),
+        contract.stake(),
+      ]);
+
       // Ensure that the caller is player 1
-      const j1 = await contract.j1();
       if (j1.toLowerCase() !== (await signer!.getAddress()).toLowerCase()) {
         setError(
           "Only player 1 (j1) can solve the game. Please switch to the correct wallet."
@@ -116,7 +122,6 @@ const SolveGameTab = () => {
       }
 
       // Ensure that player 2 has made their move
-      const c2 = await contract.c2();
       if (c2 === 0) {
         setError(
           "Player 2 has not made their move yet. Cannot solve the game."
@@ -126,7 +131,6 @@ const SolveGameTab = () => {
       }
 
       // Ensure not already solved
-      const stake = await contract.stake();
       if (stake.isZero()) {
         setError("This game has already been solved.");
         setIsLoading(false);
@@ -163,6 +167,7 @@ const SolveGameTab = () => {
       console.log("ethRecieved", ethRecieved);
 
       console.log("Game solved successfully");
+      setSuccess(true);
       setIsLoading(false);
     } catch (error) {
       console.log(error);
@@ -170,111 +175,106 @@ const SolveGameTab = () => {
     }
   };
 
-  return (
-    <div>
-      <h1 className="text-2xl py-3">Solve a game</h1>
+  if (success) {
+    return (
+      <div>
+        <p>Game solved successfully</p>
+      </div>
+    );
+  }
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <FormField
-            control={form.control}
-            name="contractAddress"
-            render={({ field }) => (
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <FormField
+          control={form.control}
+          name="contractAddress"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Contract address</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="0x..."
+                  {...field}
+                  value={contractAddress}
+                  disabled={true}
+                />
+              </FormControl>
+              <FormDescription>
+                This is the address of the contract you are solving.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="p1Move"
+          render={({ field }) => {
+            return (
               <FormItem>
-                <FormLabel>Contract address</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="0x..."
-                    {...field}
-                    onChange={(e) => {
-                      field.onChange(e.target.value);
-                      setContractAddress(e.target.value);
-                    }}
-                    disabled={isLoading}
-                  />
-                </FormControl>
+                <FormLabel>Your move</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  disabled={
+                    form.getValues("contractAddress") === "" || isLoading
+                  }
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value={moves.Rock.toString()} key={moves.Rock}>
+                      Rock
+                    </SelectItem>
+                    <SelectItem
+                      value={moves.Paper.toString()}
+                      key={moves.Paper}
+                    >
+                      Paper
+                    </SelectItem>
+                    <SelectItem
+                      value={moves.Scissors.toString()}
+                      key={moves.Scissors}
+                    >
+                      Scissors
+                    </SelectItem>
+                    <SelectItem
+                      value={moves.Lizard.toString()}
+                      key={moves.Lizard}
+                    >
+                      Lizard
+                    </SelectItem>
+                    <SelectItem
+                      value={moves.Spock.toString()}
+                      key={moves.Spock}
+                    >
+                      Spock
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
                 <FormDescription>
-                  This is the address of the contract you are solving.
+                  Reconfirm your move to finalize the game.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
-            )}
-          />
+            );
+          }}
+        />
 
-          <FormField
-            control={form.control}
-            name="p1Move"
-            render={({ field }) => {
-              return (
-                <FormItem>
-                  <FormLabel>Your move</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    disabled={
-                      form.getValues("contractAddress") === "" || isLoading
-                    }
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem
-                        value={moves.Rock.toString()}
-                        key={moves.Rock}
-                      >
-                        Rock
-                      </SelectItem>
-                      <SelectItem
-                        value={moves.Paper.toString()}
-                        key={moves.Paper}
-                      >
-                        Paper
-                      </SelectItem>
-                      <SelectItem
-                        value={moves.Scissors.toString()}
-                        key={moves.Scissors}
-                      >
-                        Scissors
-                      </SelectItem>
-                      <SelectItem
-                        value={moves.Lizard.toString()}
-                        key={moves.Lizard}
-                      >
-                        Lizard
-                      </SelectItem>
-                      <SelectItem
-                        value={moves.Spock.toString()}
-                        key={moves.Spock}
-                      >
-                        Spock
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    Reconfirm your move to finalize the game.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              );
-            }}
-          />
-
-          <Button type="submit" disabled={isLoading || error !== ""}>
-            {isLoading ? "Solving..." : "Solve game"}
-          </Button>
-          <p
-            data-slot="form-message"
-            className={cn("text-destructive text-sm")}
-          >
-            {error}
-          </p>
-        </form>
-      </Form>
-    </div>
+        <Button type="submit" disabled={isLoading || error !== ""}>
+          {isLoading ? "Solving..." : "Solve game"}
+        </Button>
+        <p data-slot="form-message" className={cn("text-destructive text-sm")}>
+          {error}
+        </p>
+      </form>
+    </Form>
   );
 };
 
-export default SolveGameTab;
+export default SolveGameForm;

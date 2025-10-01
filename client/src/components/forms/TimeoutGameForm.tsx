@@ -15,13 +15,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const TimeoutGameTab = () => {
+const TimeoutGameForm = ({ contractAddress }: { contractAddress: string }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
-  const [contractAddress, setContractAddress] = useState<string>("");
+  const [success, setSuccess] = useState<boolean>(false);
+
   const [hasPlayer1TimedOut, setHasPlayer1TimedOut] = useState<boolean>(false);
   const [hasPlayer2TimedOut, setHasPlayer2TimedOut] = useState<boolean>(false);
 
@@ -39,7 +40,7 @@ const TimeoutGameTab = () => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      contractAddress: "",
+      contractAddress: contractAddress,
     },
   });
 
@@ -47,15 +48,20 @@ const TimeoutGameTab = () => {
     const fetchContractInfo = async () => {
       try {
         const contract = new ethers.Contract(contractAddress, abi, provider!);
-        // fetch timeout and last action
-        const TIMEOUT_SECONDS = await contract.TIMEOUT();
-        const lastActionTimestamp = await contract.lastAction();
+
+        // Fetch required contract info
+        const [TIMEOUT_SECONDS, lastActionTimestamp, c2, stake] =
+          await Promise.all([
+            contract.TIMEOUT(),
+            contract.lastAction(),
+            contract.c2(),
+            contract.stake(),
+          ]);
 
         // convert BigNumber to number and create date
         const timeout_seconds = TIMEOUT_SECONDS.toNumber();
         const lastActionDate = new Date(lastActionTimestamp.toNumber() * 1000);
 
-        const stake = await contract.stake();
         if (stake.isZero()) {
           setError("This game has already been solved.");
           setIsLoading(false);
@@ -68,7 +74,6 @@ const TimeoutGameTab = () => {
           return;
         } else {
           // check who caused the timeout
-          const c2 = await contract.c2();
           console.log(c2);
 
           // if c2 is not 0, that means player 2 has moved
@@ -135,11 +140,12 @@ const TimeoutGameTab = () => {
         }
         console.log("Timing out player 2...");
         const tx = await contract.j2Timeout();
-        console.log("Player 2 timed out successfully");
         const receipt = await tx.wait();
+        console.log("Player 2 timed out successfully");
         console.log(receipt);
       }
 
+      setSuccess(true);
       setIsLoading(false);
     } catch (error) {
       console.log(error);
@@ -147,10 +153,16 @@ const TimeoutGameTab = () => {
     }
   };
 
+  if (success) {
+    return (
+      <div>
+        <p>Game timed out successfully</p>
+      </div>
+    );
+  }
+
   return (
     <div>
-      <h1 className="text-2xl py-3">Timeout a game</h1>
-
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField
@@ -163,14 +175,8 @@ const TimeoutGameTab = () => {
                   <Input
                     placeholder="0x..."
                     {...field}
-                    onChange={(e) => {
-                      field.onChange(e.target.value);
-                      setContractAddress(e.target.value);
-                      setHasPlayer1TimedOut(false);
-                      setHasPlayer2TimedOut(false);
-                      setError("");
-                    }}
-                    disabled={isLoading}
+                    value={contractAddress}
+                    disabled={true}
                   />
                 </FormControl>
                 <FormDescription>
@@ -194,17 +200,14 @@ const TimeoutGameTab = () => {
 
       {hasPlayer1TimedOut && (
         <>
-          <p>
-            Player 1 has timed out. Player 2 has won and can now retrieve the
-            entire stake.
-          </p>
+          <p>Player 1 has timed out. Player 2 can retrieve the entire stake.</p>
         </>
       )}
       {hasPlayer2TimedOut && (
         <>
           <p>
-            Player 2 did not join the game in time. Player 1 can now retrieve
-            the stake.
+            Player 2 did not join the game in time. Player 1 can retrieve the
+            stake.
           </p>
         </>
       )}
@@ -212,4 +215,4 @@ const TimeoutGameTab = () => {
   );
 };
 
-export default TimeoutGameTab;
+export default TimeoutGameForm;
