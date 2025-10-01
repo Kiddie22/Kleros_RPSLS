@@ -111,10 +111,8 @@ const JoinGameTab = () => {
         throw new Error("Invalid move value. Must be between 1 and 5.");
       }
 
-      // Check if contract is in correct state for player 2 to play
-      const c2 = await contract.c2();
+      // Ensure this wallet is player 2
       const j2 = await contract.j2();
-
       if (j2.toLowerCase() !== walletAddress.toLowerCase()) {
         setError(
           "This wallet is not the second player. Please switch to the correct wallet."
@@ -123,6 +121,16 @@ const JoinGameTab = () => {
         return;
       }
 
+      // Ensure not already solved
+      const stake = await contract.stake();
+      if (stake.isZero()) {
+        setError("This game has already been solved.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Ensure player 2 has not made a move
+      const c2 = await contract.c2();
       if (c2 !== 0) {
         setError("Player 2 has already made a move.");
         setIsLoading(false);

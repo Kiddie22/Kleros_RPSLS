@@ -125,6 +125,14 @@ const SolveGameTab = () => {
         return;
       }
 
+      // Ensure not already solved
+      const stake = await contract.stake();
+      if (stake.isZero()) {
+        setError("This game has already been solved.");
+        setIsLoading(false);
+        return;
+      }
+
       const salt = import.meta.env.VITE_HASH_SALT;
       const saltBigNumber = ethers.BigNumber.from(salt);
       const moveValue = parseInt(values.p1Move);
@@ -149,6 +157,10 @@ const SolveGameTab = () => {
       const tx = await contract.solve(moveValue, saltBigNumber);
       const receipt = await tx.wait();
       console.log(receipt);
+
+      // fetch eth recieved from the contract
+      const ethRecieved = await provider!.getBalance(values.contractAddress);
+      console.log("ethRecieved", ethRecieved);
 
       console.log("Game solved successfully");
       setIsLoading(false);

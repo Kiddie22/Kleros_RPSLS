@@ -24,9 +24,11 @@ import {
 import { useRpsContractFactory } from "@/hooks/useRpsContractFactory";
 import { useWeb3 } from "@/contexts/Web3Context";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 const NewGameTab = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>("");
   const [hash, setHash] = useState<string>("");
   const [contractAddress, setContractAddress] = useState<string>("");
 
@@ -67,6 +69,7 @@ const NewGameTab = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsLoading(true);
+      setError("");
       console.log(values);
 
       const salt = import.meta.env.VITE_HASH_SALT;
@@ -91,7 +94,21 @@ const NewGameTab = () => {
       setContractAddress(contract?.address!);
       setIsLoading(false);
     } catch (error) {
-      console.log(error);
+      console.log({ error });
+
+      if ((error as any).code === "INSUFFICIENT_FUNDS") {
+        setError(
+          "Insufficient funds to deploy contract. Please add more ETH to your wallet."
+        );
+        setIsLoading(false);
+        return;
+      } else if ((error as any).code === "ACTION_REJECTED") {
+        setError("Transaction was rejected. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+
+      setError((error as any).reason);
       setIsLoading(false);
     }
   };
@@ -198,6 +215,12 @@ const NewGameTab = () => {
             <Button type="submit" disabled={isLoading}>
               {isLoading ? "Deploying..." : "Start game"}
             </Button>
+            <p
+              data-slot="form-message"
+              className={cn("text-destructive text-sm")}
+            >
+              {error}
+            </p>
           </form>
         </Form>
       )}
