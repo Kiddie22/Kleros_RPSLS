@@ -63,57 +63,6 @@ const JoinGameTab = () => {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    try {
-      setIsLoading(true);
-      console.log(values);
-
-      setError("");
-
-      const contract = new ethers.Contract(
-        values.contractAddress,
-        abi,
-        signer!
-      );
-      const moveValue = parseInt(values.p2Move);
-
-      // Validate move value
-      if (isNaN(moveValue) || moveValue < 1 || moveValue > 5) {
-        throw new Error("Invalid move value. Must be between 1 and 5.");
-      }
-
-      // Check if contract is in correct state for player 2 to play
-      const c2 = await contract.c2();
-      const j2 = await contract.j2();
-
-      if (j2 !== walletAddress) {
-        setError(
-          "This wallet is not the second player. Please switch to the correct wallet."
-        );
-        return;
-      }
-
-      if (c2 !== 0) {
-        setError("Player 2 has already made a move.");
-        return;
-      }
-
-      const tx = await contract.play(moveValue, {
-        value: ethers.utils.parseEther(stake),
-      });
-
-      const receipt = await tx.wait();
-      console.log(receipt);
-
-      console.log("Game joined successfully");
-      setIsLoading(false);
-    } catch (error) {
-      setError(error as string);
-      console.log(error);
-      setIsLoading(false);
-    }
-  };
-
   const getContractStake = async (contractAddress: string) => {
     try {
       const contract = new ethers.Contract(contractAddress, abi, provider!);
@@ -142,6 +91,59 @@ const JoinGameTab = () => {
       fetchStake();
     }
   }, [contractAddress]);
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      setIsLoading(true);
+      console.log(values);
+
+      setError("");
+
+      const contract = new ethers.Contract(
+        values.contractAddress,
+        abi,
+        signer!
+      );
+      const moveValue = parseInt(values.p2Move);
+
+      // Validate move value
+      if (isNaN(moveValue) || moveValue < 1 || moveValue > 5) {
+        throw new Error("Invalid move value. Must be between 1 and 5.");
+      }
+
+      // Check if contract is in correct state for player 2 to play
+      const c2 = await contract.c2();
+      const j2 = await contract.j2();
+
+      if (j2.toLowerCase() !== walletAddress.toLowerCase()) {
+        setError(
+          "This wallet is not the second player. Please switch to the correct wallet."
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      if (c2 !== 0) {
+        setError("Player 2 has already made a move.");
+        setIsLoading(false);
+        return;
+      }
+
+      const tx = await contract.play(moveValue, {
+        value: ethers.utils.parseEther(stake),
+      });
+
+      const receipt = await tx.wait();
+      console.log(receipt);
+
+      console.log("Game joined successfully");
+      setIsLoading(false);
+    } catch (error) {
+      setError(error as string);
+      console.log(error);
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div>
