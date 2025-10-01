@@ -68,9 +68,17 @@ const NewGameTab = () => {
     try {
       setIsLoading(true);
       console.log(values);
-      const salt = Math.floor(Math.random() * 1000000);
+
+      if (process.env.VITE_HASH_SALT === undefined) {
+        throw new Error("VITE_HASH_SALT is not defined");
+      }
+
+      const salt = process.env.VITE_HASH_SALT;
       const moveValue = parseInt(values.p1Move);
-      const hash = ethers.utils.keccak256(new Uint8Array([moveValue, salt]));
+      const saltNumber = parseInt(salt);
+      const hash = ethers.utils.keccak256(
+        new Uint8Array([moveValue, saltNumber])
+      );
       setHash(hash);
       console.log(hash);
 
