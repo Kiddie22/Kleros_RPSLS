@@ -73,6 +73,14 @@ const NewGameTab = () => {
       console.log(values);
 
       const salt = import.meta.env.VITE_HASH_SALT;
+
+      if (salt === "") {
+        setError("An internal error occurred. Please try again.");
+        console.log("Salt is not set. Please set the salt in the .env file.");
+        setIsLoading(false);
+        return;
+      }
+
       const saltBigNumber = ethers.BigNumber.from(salt);
       const moveValue = parseInt(values.p1Move);
 
