@@ -4,12 +4,13 @@ import { useWeb3 } from "@/contexts/Web3Context";
 import JoinGameTab from "./JoinGameTab";
 import SolveGameTab from "./SolveGameTab";
 import TimeoutGameTab from "./TimeoutGameTab";
+import { Separator } from "./ui/separator";
 
 const GameLogic = () => {
   const { walletAddress } = useWeb3();
 
   return (
-    <div>
+    <div className="flex flex-col gap-4 items-center justify-center">
       <span>Welcome {walletAddress}</span>
 
       <Tabs defaultValue="account" className="w-[400px]">
@@ -19,6 +20,7 @@ const GameLogic = () => {
           <TabsTrigger value="solve">Solve a game</TabsTrigger>
           <TabsTrigger value="timeout">Timeout a game</TabsTrigger>
         </TabsList>
+        <Separator className="my-4" />
         <TabsContent value="new">
           <NewGameTab />
         </TabsContent>

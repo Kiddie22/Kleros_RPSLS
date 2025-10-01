@@ -5,7 +5,7 @@ const Login = () => {
   const { walletAddress, connectWallet } = useWeb3();
 
   return (
-    <div>
+    <div className="flex flex-col gap-4 items-center justify-center">
       {!walletAddress ? (
         <>
           <p>Please connect your wallet to begin</p>

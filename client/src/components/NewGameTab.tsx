@@ -134,7 +134,10 @@ const NewGameTab = () => {
         </>
       ) : (
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-8 w-full"
+          >
             <FormField
               control={form.control}
               name="p1Move"

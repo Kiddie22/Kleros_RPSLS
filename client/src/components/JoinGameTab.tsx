@@ -202,8 +202,8 @@ const JoinGameTab = () => {
                   />
                 </FormControl>
                 <FormDescription>
-                  This is the stake set by player 1. You must match this stake
-                  to join the game.
+                  You cannot change this value. It will match the stake set by
+                  player 1.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
