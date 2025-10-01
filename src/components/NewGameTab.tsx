@@ -69,20 +69,18 @@ const NewGameTab = () => {
       setIsLoading(true);
       console.log(values);
 
-      if (process.env.VITE_HASH_SALT === undefined) {
-        throw new Error("VITE_HASH_SALT is not defined");
-      }
-
-      const salt = process.env.VITE_HASH_SALT;
+      const salt = import.meta.env.VITE_HASH_SALT;
+      const saltBigNumber = ethers.BigNumber.from(salt);
       const moveValue = parseInt(values.p1Move);
-      const saltNumber = parseInt(salt);
+
       const hash = ethers.utils.keccak256(
-        new Uint8Array([moveValue, saltNumber])
+        ethers.utils.solidityPack(
+          ["uint8", "uint256"],
+          [moveValue, saltBigNumber]
+        )
       );
       setHash(hash);
-      console.log(hash);
 
-      console.log(contractFactory);
       console.log("Deploying contract...");
       const contract = await contractFactory?.deploy(hash, values.p2Address, {
         value: ethers.utils.parseEther(values.stake),
