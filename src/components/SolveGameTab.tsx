@@ -190,6 +190,7 @@ const SolveGameTab = () => {
                       field.onChange(e.target.value);
                       setContractAddress(e.target.value);
                     }}
+                    disabled={isLoading}
                   />
                 </FormControl>
                 <FormDescription>
@@ -210,7 +211,9 @@ const SolveGameTab = () => {
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
-                    disabled={form.getValues("contractAddress") === ""}
+                    disabled={
+                      form.getValues("contractAddress") === "" || isLoading
+                    }
                   >
                     <FormControl>
                       <SelectTrigger>

@@ -171,9 +171,11 @@ const JoinGameTab = () => {
                     {...field}
                     onChange={(e) => {
                       setStake("0");
+                      setError("");
                       field.onChange(e.target.value);
                       setContractAddress(e.target.value);
                     }}
+                    disabled={isLoading}
                   />
                 </FormControl>
                 <FormDescription>
@@ -218,7 +220,9 @@ const JoinGameTab = () => {
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
-                    disabled={form.getValues("contractAddress") === ""}
+                    disabled={
+                      form.getValues("contractAddress") === "" || isLoading
+                    }
                   >
                     <FormControl>
                       <SelectTrigger>

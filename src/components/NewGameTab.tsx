@@ -134,7 +134,11 @@ const NewGameTab = () => {
                 return (
                   <FormItem>
                     <FormLabel>Your move</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={isLoading}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select" />
@@ -186,7 +190,11 @@ const NewGameTab = () => {
                 <FormItem>
                   <FormLabel>Address of opponent</FormLabel>
                   <FormControl>
-                    <Input placeholder="0x..." {...field} />
+                    <Input
+                      placeholder="0x..."
+                      {...field}
+                      disabled={isLoading}
+                    />
                   </FormControl>
                   <FormDescription>
                     This is who you are playing against.
@@ -203,7 +211,12 @@ const NewGameTab = () => {
                 <FormItem>
                   <FormLabel>Stake value</FormLabel>
                   <FormControl>
-                    <Input placeholder="0" {...field} type="number" />
+                    <Input
+                      placeholder="0"
+                      {...field}
+                      type="number"
+                      disabled={isLoading}
+                    />
                   </FormControl>
                   <FormDescription>
                     This stake will be matched by your opponent.
