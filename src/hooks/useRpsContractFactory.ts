@@ -194,7 +194,6 @@ export const useRpsContractFactory = (
   ];
 
   const contractFactory = useMemo(() => {
-    console.log(signer);
     if (!signer) return null;
 
     const bytecode =
