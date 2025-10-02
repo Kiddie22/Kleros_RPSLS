@@ -196,8 +196,8 @@ const GameInfo = ({ game }: { game: any }) => {
             <DialogTrigger asChild>
               <Button
                 className="w-full cursor-pointer"
-                disabled={hasPlayer2Moved}
-                hidden={hasPlayer2Moved}
+                disabled={hasPlayer2Moved || hasGameSolved}
+                hidden={hasPlayer2Moved || hasGameSolved}
               >
                 Join Game
               </Button>
