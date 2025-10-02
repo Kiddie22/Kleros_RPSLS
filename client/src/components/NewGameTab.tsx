@@ -30,7 +30,11 @@ import { toast } from "sonner";
 const NewGameTab = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
+
   const [contractAddress, setContractAddress] = useState<string>("");
+  const [saltBigNumber, setSaltBigNumber] = useState<ethers.BigNumber>(
+    ethers.BigNumber.from(0)
+  );
 
   const { signer, walletAddress } = useWeb3();
   const { contractFactory } = useRpsContractFactory(signer);
@@ -46,10 +50,15 @@ const NewGameTab = () => {
 
   const formSchema = z.object({
     p1Move: z.string().min(1, "Please select a move"),
-    p2Address: z.string().refine((value) => ethers.utils.isAddress(value), {
-      message:
-        "Provided address is invalid. Please insure you have typed correctly.",
-    }),
+    p2Address: z
+      .string()
+      .refine((value) => ethers.utils.isAddress(value), {
+        message:
+          "Provided address is invalid. Please insure you have typed correctly.",
+      })
+      .refine((value) => value.toLowerCase() !== walletAddress.toLowerCase(), {
+        message: "You cannot play against yourself.",
+      }),
     stake: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
       message: "Stake must be a positive number",
     }),
@@ -72,16 +81,8 @@ const NewGameTab = () => {
       setError("");
       console.log(values);
 
-      const salt = import.meta.env.VITE_HASH_SALT;
-
-      if (salt === "") {
-        setError("An internal error occurred. Please try again.");
-        console.log("Salt is not set. Please set the salt in the .env file.");
-        setIsLoading(false);
-        return;
-      }
-
-      const saltBigNumber = ethers.BigNumber.from(salt);
+      const saltBytes = ethers.utils.randomBytes(16);
+      const saltBigNumber = ethers.BigNumber.from(saltBytes);
       const moveValue = parseInt(values.p1Move);
 
       const hash = ethers.utils.keccak256(
@@ -90,6 +91,7 @@ const NewGameTab = () => {
           [moveValue, saltBigNumber]
         )
       );
+      setSaltBigNumber(saltBigNumber);
 
       console.log("Deploying contract...");
       const contract = await contractFactory?.deploy(hash, values.p2Address, {
@@ -102,18 +104,21 @@ const NewGameTab = () => {
       setIsLoading(false);
 
       // Save game to DB
-      const response = await fetch(`http://localhost:3000/api/game/new-game`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contractAddress: contract?.address,
-          stake: values.stake,
-          player1: walletAddress,
-          player2: values.p2Address,
-        }),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/game/new-game`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contractAddress: contract?.address,
+            stake: values.stake,
+            player1: walletAddress,
+            player2: values.p2Address,
+          }),
+        }
+      );
 
       const data = await response.json();
       console.log({ data });
@@ -131,7 +136,7 @@ const NewGameTab = () => {
           },
         },
         position: "top-center",
-        duration: 100000,
+        duration: 10000,
       });
     } catch (error) {
       console.log({ error });
@@ -154,19 +159,40 @@ const NewGameTab = () => {
   };
 
   return (
-    <div>
+    <div className="w-[40vw] mb-5">
       {contractAddress ? (
         <div className="flex flex-col gap-2">
           <span className="text-lg font-bold">New game created!</span>
           <span className="text-sm">Contract address:</span>
           <span className="text-gray-500 font-bold">{contractAddress}</span>
-          <span className="text-sm">
+          <span className="text-sm font-light mb-4">
             Send this to your opponent to join the game
+          </span>
+          <span className="text-sm">Salt:</span>
+          <span className="text-gray-500 font-bold flex items-center gap-8">
+            {saltBigNumber.toString()}
+            <Button
+              className="cursor-pointer"
+              onClick={() => {
+                navigator.clipboard.writeText(saltBigNumber.toString());
+                console.log("Salt copied to clipboard");
+                toast.success("Salt copied to clipboard", {
+                  duration: 5000,
+                  position: "top-center",
+                });
+              }}
+            >
+              Copy salt
+            </Button>
+          </span>
+          <span className="text-sm font-light">
+            Do not share it with anyone and do not lose it. You will need it to
+            solve the game.
           </span>
         </div>
       ) : (
         <>
-          <h1 className="text-2xl py-3">Start a new game</h1>
+          <h1 className="text-2xl py-3 text-center">Start a new game</h1>
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}

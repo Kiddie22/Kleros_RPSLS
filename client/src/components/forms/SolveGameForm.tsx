@@ -20,15 +20,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { checkWinner, cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useWeb3 } from "@/contexts/Web3Context";
 import { useRpsContractFactory } from "@/hooks/useRpsContractFactory";
+import { CheckIcon } from "lucide-react";
 
 const SolveGameForm = ({ contractAddress }: { contractAddress: string }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<boolean>(false);
+  const [winner, setWinner] = useState<string>("");
 
   const { provider, signer } = useWeb3();
   const { abi } = useRpsContractFactory(signer);
@@ -50,6 +52,7 @@ const SolveGameForm = ({ contractAddress }: { contractAddress: string }) => {
           "Provided address is invalid. Please insure you have typed correctly.",
       }),
     p1Move: z.string().min(1, "Please select a move"),
+    salt: z.string().min(1, "Please enter your salt"),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -57,6 +60,7 @@ const SolveGameForm = ({ contractAddress }: { contractAddress: string }) => {
     defaultValues: {
       contractAddress: contractAddress,
       p1Move: "",
+      salt: "",
     },
   });
 
@@ -137,8 +141,7 @@ const SolveGameForm = ({ contractAddress }: { contractAddress: string }) => {
         return;
       }
 
-      const salt = import.meta.env.VITE_HASH_SALT;
-      const saltBigNumber = ethers.BigNumber.from(salt);
+      const saltBigNumber = ethers.BigNumber.from(values.salt);
       const moveValue = parseInt(values.p1Move);
 
       // Check if the hash matches the stored hash
@@ -162,9 +165,10 @@ const SolveGameForm = ({ contractAddress }: { contractAddress: string }) => {
       const receipt = await tx.wait();
       console.log(receipt);
 
-      // fetch eth recieved from the contract
-      const ethRecieved = await provider!.getBalance(values.contractAddress);
-      console.log("ethRecieved", ethRecieved);
+      // Check who won
+      const winner = checkWinner(moveValue, c2);
+      console.log("Winner:", winner);
+      setWinner(winner);
 
       console.log("Game solved successfully");
       setSuccess(true);
@@ -177,9 +181,29 @@ const SolveGameForm = ({ contractAddress }: { contractAddress: string }) => {
 
   if (success) {
     return (
-      <div>
-        <p>Game solved successfully</p>
-      </div>
+      <>
+        <div className="flex items-center gap-2">
+          <CheckIcon className="w-10 h-10 text-green-500 animate-pulse border-2 border-green-500 rounded-full p-1" />
+          <p className=" text-xl">Game solved successfully</p>
+        </div>
+        {winner === "player 1" && (
+          <p className="text-sm text-green-500">
+            Congratulations! You are the winner! You should receive the entire
+            money pool in your wallet shortly.
+          </p>
+        )}
+        {winner === "player 2" && (
+          <p className="text-sm text-red-500">
+            Sorry but you lost. You won't be receiving any money today.
+          </p>
+        )}
+        {winner === "draw" && (
+          <p className="text-sm text-blue-500">
+            The game is a draw. You should receive your half of the money pool
+            in your wallet shortly.
+          </p>
+        )}
+      </>
     );
   }
 
@@ -216,7 +240,10 @@ const SolveGameForm = ({ contractAddress }: { contractAddress: string }) => {
               <FormItem>
                 <FormLabel>Your move</FormLabel>
                 <Select
-                  onValueChange={field.onChange}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    setError("");
+                  }}
                   value={field.value}
                   disabled={
                     form.getValues("contractAddress") === "" || isLoading
@@ -264,6 +291,29 @@ const SolveGameForm = ({ contractAddress }: { contractAddress: string }) => {
               </FormItem>
             );
           }}
+        />
+
+        <FormField
+          control={form.control}
+          name="salt"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Salt</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    setError("");
+                  }}
+                />
+              </FormControl>
+              <FormDescription>
+                This is the salt you received when you created the game.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
         />
 
         <Button type="submit" disabled={isLoading || error !== ""}>

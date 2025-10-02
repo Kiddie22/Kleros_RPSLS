@@ -15,8 +15,6 @@ const CountdownClock = ({
     }, 1000);
   }, [timeoutThresholdDate]);
 
-  console.log(timeRemaining);
-
   return (
     <div>
       <p>

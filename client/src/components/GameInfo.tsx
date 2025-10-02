@@ -26,6 +26,7 @@ import { useWeb3 } from "@/contexts/Web3Context";
 import { useRpsContractFactory } from "@/hooks/useRpsContractFactory";
 import { Badge } from "./ui/badge";
 import CountdownClock from "./CountdownClock";
+import { BadgeCheckIcon } from "lucide-react";
 
 const GameInfo = ({ game }: { game: any }) => {
   const contractAddress = game.contractAddress;
@@ -93,27 +94,21 @@ const GameInfo = ({ game }: { game: any }) => {
   };
 
   useEffect(() => {
-    console.log("useEffect triggered", {
-      signer: !!signer,
-      abi: !!abi,
-      contractAddress,
-    });
     if (signer && abi) {
       fetchGameInfo();
     }
   }, [contractAddress, signer, abi]);
 
   // Set up periodic refresh to keep state updated
-  useEffect(() => {
-    if (!signer || !abi || hasGameSolved) return;
+  // useEffect(() => {
+  //   if (!signer || !abi || hasGameSolved) return;
 
-    const interval = setInterval(() => {
-      if (hasGameSolved) return;
-      fetchGameInfo();
-    }, 60000); // Refresh every minute
+  //   const interval = setInterval(() => {
+  //     fetchGameInfo();
+  //   }, 60000); // Refresh every minute
 
-    return () => clearInterval(interval);
-  }, [signer, abi, contractAddress]);
+  //   return () => clearInterval(interval);
+  // }, [signer, abi, contractAddress, hasGameSolved]);
 
   // Show loading only when we're actually fetching data
   if (isLoading && signer && abi) {
@@ -143,6 +138,7 @@ const GameInfo = ({ game }: { game: any }) => {
               {/* Show only the game solved badge if the game has been solved */}
               {hasGameSolved && (
                 <Badge className="text-xs text-green-500 bg-green-500/10">
+                  <BadgeCheckIcon />
                   Game solved
                 </Badge>
               )}
@@ -172,7 +168,9 @@ const GameInfo = ({ game }: { game: any }) => {
           <div className="flex flex-row justify-between text-sm text-gray-500 mb-4">
             <span className="flex items-center gap-2">
               <Avatar className="size-10 border-2 border-primary/20">
-                <AvatarImage src={`https://robohash.org/${game.player1}`} />
+                <AvatarImage
+                  src={`https://robohash.org/${game.player1.toLowerCase()}`}
+                />
                 <AvatarFallback>P1</AvatarFallback>
               </Avatar>
               P1: {truncateAddress(game.player1)}
@@ -182,7 +180,9 @@ const GameInfo = ({ game }: { game: any }) => {
 
             <span className="flex items-center gap-2">
               <Avatar className="size-10 border-2 border-primary/20">
-                <AvatarImage src={`https://robohash.org/${game.player2}`} />
+                <AvatarImage
+                  src={`https://robohash.org/${game.player2.toLowerCase()}`}
+                />
                 <AvatarFallback>P2</AvatarFallback>
               </Avatar>
               P2: {truncateAddress(game.player2)}

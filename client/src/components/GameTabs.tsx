@@ -14,7 +14,9 @@ const GameTabs = () => {
       <span>Hey there,</span>
       <span className="flex items-center gap-2">
         <Avatar className="size-10 border-2 border-primary/20">
-          <AvatarImage src={`https://robohash.org/${walletAddress}`} />
+          <AvatarImage
+            src={`https://robohash.org/${walletAddress.toLowerCase()}`}
+          />
           <AvatarFallback>P1</AvatarFallback>
         </Avatar>
         P1: {truncateAddress(walletAddress)}

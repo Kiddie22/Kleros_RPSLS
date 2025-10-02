@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { CheckIcon } from "lucide-react";
 
 const TimeoutGameForm = ({ contractAddress }: { contractAddress: string }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -155,9 +156,15 @@ const TimeoutGameForm = ({ contractAddress }: { contractAddress: string }) => {
 
   if (success) {
     return (
-      <div>
-        <p>Game timed out successfully</p>
-      </div>
+      <>
+        <div className="flex items-center gap-2">
+          <CheckIcon className="w-10 h-10 text-green-500 animate-pulse border-2 border-green-500 rounded-full p-1" />
+          <p className=" text-xl">Game timed out successfully</p>
+        </div>
+        <p className="text-sm text-gray-500">
+          You should receive the stake in your wallet shortly.
+        </p>
+      </>
     );
   }
 
