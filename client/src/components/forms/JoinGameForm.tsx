@@ -164,10 +164,11 @@ const JoinGameForm = ({ contractAddress }: { contractAddress: string }) => {
       <>
         <div className="flex items-center gap-2">
           <CheckIcon className="w-10 h-10 text-green-500 animate-pulse border-2 border-green-500 rounded-full p-1" />
-          <p className=" text-xl">Game timed out successfully</p>
+          <p className=" text-xl">Game joined!</p>
         </div>
         <p className="text-sm text-gray-500">
-          You should receive the stake in your wallet shortly.
+          Wait till player 1 solves the game, our cash out if the game times
+          out.
         </p>
       </>
     );

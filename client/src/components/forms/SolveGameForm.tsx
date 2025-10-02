@@ -306,6 +306,7 @@ const SolveGameForm = ({ contractAddress }: { contractAddress: string }) => {
                     field.onChange(e);
                     setError("");
                   }}
+                  disabled={isLoading}
                 />
               </FormControl>
               <FormDescription>
