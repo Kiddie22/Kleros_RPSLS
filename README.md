@@ -178,33 +178,10 @@ rps/
 - `GET /api/game/all` - Get all games with pagination
   - Query params: `page`, `limit`
 - `POST /api/game/new-game` - Create a new game
-- `DELETE /api/game/delete/:contractAddress` - Delete a game
 
 ### Health Check
 
 - `GET /health` - Server health status
-
-## 🎨 UI Components
-
-### Game Cards
-
-- **Game Info**: Contract address, players, stake amount
-- **Status Badges**: Player turn, game solved, timeout status
-- **Action Buttons**: Join, Solve, Timeout based on game state
-- **Countdown Timer**: Visual timeout countdown
-
-### Forms
-
-- **Join Game Form**: Submit moves to existing games
-- **Solve Game Form**: Resolve completed games
-- **Timeout Game Form**: Claim timed-out games
-
-## 🔒 Security Features
-
-- **Smart Contract Validation**: All game logic is enforced on-chain
-- **Timeout Protection**: Automatic resolution prevents stuck games
-- **Stake Security**: ETH is held in smart contracts until resolution
-- **Input Validation**: Form validation with Zod schemas
 
 ## 🐛 Troubleshooting
 
@@ -230,20 +207,6 @@ rps/
    - Check if backend server is running
    - Verify MongoDB connection
    - Check browser console for errors
-
-## 🚀 Deployment
-
-### Backend Deployment
-
-1. Set up MongoDB Atlas or local MongoDB
-2. Update environment variables
-3. Deploy to your preferred platform (Heroku, Railway, etc.)
-
-### Frontend Deployment
-
-1. Build the production version: `npm run build`
-2. Deploy to Vercel, Netlify, or your preferred platform
-3. Update API endpoints in the code
 
 ## 🤝 Contributing
 
