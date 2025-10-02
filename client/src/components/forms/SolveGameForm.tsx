@@ -119,7 +119,7 @@ const SolveGameForm = ({ contractAddress }: { contractAddress: string }) => {
       // Ensure that the caller is player 1
       if (j1.toLowerCase() !== (await signer!.getAddress()).toLowerCase()) {
         setError(
-          "Only player 1 (j1) can solve the game. Please switch to the correct wallet."
+          "Only player 1 can solve the game. Please switch to the correct wallet."
         );
         setIsLoading(false);
         return;
@@ -154,7 +154,7 @@ const SolveGameForm = ({ contractAddress }: { contractAddress: string }) => {
       );
       if (c1Hash !== expectedHash) {
         setError(
-          "The hash does not match the stored hash. Cannot solve the game."
+          "The move you selected or salt entered is incorrect. Cannot solve the game."
         );
         setIsLoading(false);
         return;
@@ -174,7 +174,21 @@ const SolveGameForm = ({ contractAddress }: { contractAddress: string }) => {
       setSuccess(true);
       setIsLoading(false);
     } catch (error) {
-      console.log(error);
+      console.log({ error });
+
+      if ((error as any).code === "INSUFFICIENT_FUNDS") {
+        setError(
+          "Insufficient funds to join the game. Please add more ETH to your wallet."
+        );
+        setIsLoading(false);
+        return;
+      } else if ((error as any).code === "ACTION_REJECTED") {
+        setError("Transaction was rejected. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+
+      setError((error as Error).message);
       setIsLoading(false);
     }
   };

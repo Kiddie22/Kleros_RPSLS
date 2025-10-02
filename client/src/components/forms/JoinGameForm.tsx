@@ -153,8 +153,21 @@ const JoinGameForm = ({ contractAddress }: { contractAddress: string }) => {
       setSuccess(true);
       setIsLoading(false);
     } catch (error) {
-      setError(error as string);
-      console.log(error);
+      console.log({ error });
+
+      if ((error as any).code === "INSUFFICIENT_FUNDS") {
+        setError(
+          "Insufficient funds to join the game. Please add more ETH to your wallet."
+        );
+        setIsLoading(false);
+        return;
+      } else if ((error as any).code === "ACTION_REJECTED") {
+        setError("Transaction was rejected. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+
+      setError((error as Error).message);
       setIsLoading(false);
     }
   };
@@ -232,7 +245,10 @@ const JoinGameForm = ({ contractAddress }: { contractAddress: string }) => {
                 <FormItem>
                   <FormLabel>Your move</FormLabel>
                   <Select
-                    onValueChange={field.onChange}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      setError("");
+                    }}
                     value={field.value}
                     disabled={
                       form.getValues("contractAddress") === "" || isLoading
