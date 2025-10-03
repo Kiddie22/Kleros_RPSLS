@@ -26,7 +26,13 @@ import { useWeb3 } from "@/contexts/Web3Context";
 import { useRpsContractFactory } from "@/hooks/useRpsContractFactory";
 import { CheckIcon } from "lucide-react";
 
-const SolveGameForm = ({ contractAddress }: { contractAddress: string }) => {
+const SolveGameForm = ({
+  contractAddress,
+  setIsSolveGameLoading,
+}: {
+  contractAddress: string;
+  setIsSolveGameLoading?: (isLoading: boolean) => void;
+}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<boolean>(false);
@@ -95,6 +101,11 @@ const SolveGameForm = ({ contractAddress }: { contractAddress: string }) => {
       fetchContractInfo();
     }
   }, [contractAddress]);
+
+  // Notify parent component of loading state changes
+  useEffect(() => {
+    setIsSolveGameLoading?.(isLoading);
+  }, [isLoading, setIsSolveGameLoading]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {

@@ -5,9 +5,11 @@ import JoinGameTab from "./JoinGameTab";
 import { Separator } from "./ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { truncateAddress } from "@/lib/utils";
+import { useState } from "react";
 
 const GameTabs = () => {
   const { walletAddress } = useWeb3();
+  const [isNewGameLoading, setIsNewGameLoading] = useState<boolean>(false);
 
   return (
     <div className="flex flex-col gap-4 items-center justify-center">
@@ -24,12 +26,16 @@ const GameTabs = () => {
 
       <Tabs defaultValue="new">
         <TabsList className="w-full">
-          <TabsTrigger value="new">Start a new game</TabsTrigger>
-          <TabsTrigger value="join">Join a game</TabsTrigger>
+          <TabsTrigger value="new" disabled={isNewGameLoading}>
+            Start a new game
+          </TabsTrigger>
+          <TabsTrigger value="join" disabled={isNewGameLoading}>
+            Join a game
+          </TabsTrigger>
         </TabsList>
         <Separator className="my-4" />
         <TabsContent value="new">
-          <NewGameTab />
+          <NewGameTab setIsNewGameLoading={setIsNewGameLoading} />
         </TabsContent>
         <TabsContent value="join">
           <JoinGameTab />

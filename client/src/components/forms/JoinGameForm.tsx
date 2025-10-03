@@ -26,7 +26,13 @@ import { useRpsContractFactory } from "@/hooks/useRpsContractFactory";
 import { cn } from "@/lib/utils";
 import { CheckIcon } from "lucide-react";
 
-const JoinGameForm = ({ contractAddress }: { contractAddress: string }) => {
+const JoinGameForm = ({
+  contractAddress,
+  setIsJoinGameLoading,
+}: {
+  contractAddress: string;
+  setIsJoinGameLoading?: (isLoading: boolean) => void;
+}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<boolean>(false);
@@ -92,6 +98,11 @@ const JoinGameForm = ({ contractAddress }: { contractAddress: string }) => {
       fetchStake();
     }
   }, [contractAddress]);
+
+  // Notify parent component of loading state changes
+  useEffect(() => {
+    setIsJoinGameLoading?.(isLoading);
+  }, [isLoading, setIsJoinGameLoading]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
@@ -297,7 +308,7 @@ const JoinGameForm = ({ contractAddress }: { contractAddress: string }) => {
               );
             }}
           />
-          <Button type="submit" disabled={isLoading || error !== ""}>
+          <Button type="submit" disabled={isLoading}>
             {isLoading ? "Joining..." : "Join game"}
           </Button>
           <p

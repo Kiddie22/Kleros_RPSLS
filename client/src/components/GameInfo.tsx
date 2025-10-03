@@ -38,6 +38,12 @@ const GameInfo = ({ game }: { game: any }) => {
     new Date()
   );
 
+  // Track loading state for every form so we can disable the dialogs from closing when loading
+  const [isJoinGameLoading, setIsJoinGameLoading] = useState<boolean>(false);
+  const [isSolveGameLoading, setIsSolveGameLoading] = useState<boolean>(false);
+  const [isTimeoutGameLoading, setIsTimeoutGameLoading] =
+    useState<boolean>(false);
+
   const { signer } = useWeb3();
   const { abi } = useRpsContractFactory(signer);
 
@@ -202,14 +208,20 @@ const GameInfo = ({ game }: { game: any }) => {
                 Join Game
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w">
+            <DialogContent
+              className="sm:max-w"
+              disableClose={isJoinGameLoading}
+            >
               <DialogHeader className="mb-4">
                 <DialogTitle>Join Game</DialogTitle>
                 <DialogDescription>
                   Join the game by submitting your move.
                 </DialogDescription>
               </DialogHeader>
-              <JoinGameForm contractAddress={game.contractAddress} />
+              <JoinGameForm
+                contractAddress={game.contractAddress}
+                setIsJoinGameLoading={setIsJoinGameLoading}
+              />
             </DialogContent>
           </Dialog>
 
@@ -223,14 +235,20 @@ const GameInfo = ({ game }: { game: any }) => {
                 Solve Game
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w">
+            <DialogContent
+              className="sm:max-w"
+              disableClose={isSolveGameLoading}
+            >
               <DialogHeader className="mb-4">
                 <DialogTitle>Solve Game</DialogTitle>
                 <DialogDescription>
                   Solve the game when all players have submitted their moves.
                 </DialogDescription>
               </DialogHeader>
-              <SolveGameForm contractAddress={game.contractAddress} />
+              <SolveGameForm
+                contractAddress={game.contractAddress}
+                setIsSolveGameLoading={setIsSolveGameLoading}
+              />
             </DialogContent>
           </Dialog>
 
@@ -244,14 +262,20 @@ const GameInfo = ({ game }: { game: any }) => {
                 Timeout Game
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w">
+            <DialogContent
+              className="sm:max-w"
+              disableClose={isTimeoutGameLoading}
+            >
               <DialogHeader className="mb-4">
                 <DialogTitle>Timeout Game</DialogTitle>
                 <DialogDescription>
                   Timeout the game when opponent does not respond.
                 </DialogDescription>
               </DialogHeader>
-              <TimeoutGameForm contractAddress={game.contractAddress} />
+              <TimeoutGameForm
+                contractAddress={game.contractAddress}
+                setIsTimeoutGameLoading={setIsTimeoutGameLoading}
+              />
             </DialogContent>
           </Dialog>
         </CardFooter>

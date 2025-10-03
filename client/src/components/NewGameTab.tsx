@@ -23,11 +23,15 @@ import {
 
 import { useRpsContractFactory } from "@/hooks/useRpsContractFactory";
 import { useWeb3 } from "@/contexts/Web3Context";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const NewGameTab = () => {
+const NewGameTab = ({
+  setIsNewGameLoading,
+}: {
+  setIsNewGameLoading: (isLoading: boolean) => void;
+}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
 
@@ -157,6 +161,10 @@ const NewGameTab = () => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    setIsNewGameLoading(isLoading);
+  }, [isLoading, setIsNewGameLoading]);
 
   return (
     <div className="w-[40vw] mb-5">

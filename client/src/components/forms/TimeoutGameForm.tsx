@@ -19,7 +19,13 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CheckIcon } from "lucide-react";
 
-const TimeoutGameForm = ({ contractAddress }: { contractAddress: string }) => {
+const TimeoutGameForm = ({
+  contractAddress,
+  setIsTimeoutGameLoading,
+}: {
+  contractAddress: string;
+  setIsTimeoutGameLoading?: (isLoading: boolean) => void;
+}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<boolean>(false);
@@ -98,6 +104,11 @@ const TimeoutGameForm = ({ contractAddress }: { contractAddress: string }) => {
       fetchContractInfo();
     }
   }, [contractAddress]);
+
+  // Notify parent component of loading state changes
+  useEffect(() => {
+    setIsTimeoutGameLoading?.(isLoading);
+  }, [isLoading, setIsTimeoutGameLoading]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
@@ -193,7 +204,7 @@ const TimeoutGameForm = ({ contractAddress }: { contractAddress: string }) => {
               </FormItem>
             )}
           />
-          <Button type="submit" disabled={isLoading || error !== ""}>
+          <Button type="submit" disabled={isLoading}>
             {isLoading ? "Timing out..." : "Timeout game"}
           </Button>
           <p
